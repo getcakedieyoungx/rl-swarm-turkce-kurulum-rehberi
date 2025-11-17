@@ -1,177 +1,192 @@
-# Windows'ta WSL2 ve RL-Swarm Kurulumu
+# Windows'ta WSL2 ile RL-Swarm Kurulumu
 
-## Adım 1: WSL2 Yükleme
+Windows'ta RL-Swarm çalıştırmak için WSL2 (Windows Subsystem for Linux 2) kullanıyoruz. Bu, Linuxın tam bir yönetim siste­mi éttiği ve Windows'un içinde çalışması demek.
 
-Windows'ta RL-Swarm çalıştırmak için WSL2 (Windows Subsystem for Linux 2) gerekir.
+---
 
-### Gereksinimler
-- Windows 10 (Build 19041+) veya Windows 11
-- 4GB+ RAM
-- Hyper-V desteği etkin
+## WSL2 Kurulumu
 
-### Kurulum Adımları
+### Kontrol
 
-**1. PowerShell'i Yönetici olarak açın:**
+Windows 10 Build 19041+ veya Windows 11 gerekli.
 
 ```powershell
-Start-Process PowerShell -Verb RunAs
+winver  # Sürüm kontrol et
 ```
 
-**2. WSL2 etkinleştirin:**
+### Adım 1: Etkinleştir
+
+PowerShell'i Yönetici olarak açıp:
 
 ```powershell
 dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
 dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
 ```
 
-**3. Bilgisayarı yeniden başlatın**
+### Adım 2: Yeniden Başlat
 
-**4. WSL2 çekirdeğini yükleme:**
+Bilgisayarı yeniden başlatın.
+
+### Adım 3: WSL2 Çekirdeği
+
+Yeniden PowerShell'de:
 
 ```powershell
 wsl --update
 wsl --set-default-version 2
 ```
 
-**5. Ubuntu yükleme:**
+### Adım 4: Ubuntu Yükle
 
 ```powershell
 wsl --install -d Ubuntu
 ```
+Ubuntu otomatik başlayacak. Kullanıcı adı ve parola oluşturun.
 
-**6. Yüklemeden sonra:**
+---
 
-Ubuntu otomatik olarak başlayacak. İlk çalıştırmada:
-- UNIX kullanıcı adı girin
-- Parola belirleyin
+## RL-Swarm Kurulması
 
-## Adım 2: Ubuntu Hazırlanması
+### PowerShell ile Otomatik
 
-### Terminal Açma
-
-**Seçenek 1:** Windows Terminal kullanarak
 ```powershell
+.\scripts\install-windows.ps1
+```
+
+### Manual Kurulum
+
+```powershell
+# WSL'ye gir
 wsl
-# veya
-wsl -d Ubuntu
-```
 
-**Seçenek 2:** Ubuntu uygulamasını başlat menüsünden açın
-
-### Sistem Güncellemesi
-
-```bash
-sudo apt update && sudo apt upgrade -y
-```
-
-## Adım 3: RL-Swarm Kurulumu
-
-### Otomatik Kurulum
-
-1. Bu repository'i klonlayın:
-```bash
+# Linux içinde
+cd ~
 git clone https://github.com/gensyn-ai/rl-swarm/
 cd rl-swarm
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
-2. Kurulum script'ini çalıştırın:
-```bash
-chmod +x ../scripts/install-ubuntu.sh
-../scripts/install-ubuntu.sh
+---
+
+## Çalıştırma
+
+### Web Arayüzüne Erişim
+
+PowerShell'den:
+```powershell
+wsl
 ```
 
-### Manuel Kurulum
-
-Bkz. Ana README dosyasının "1. Bağımlılıkları Yükleme" bölümü
-
-## Adım 4: RL-Swarm Başlatma
-
+Ubuntu prompt'unda:
 ```bash
-cd rl-swarm
+cd ~/rl-swarm
 source .venv/bin/activate
 ./run_rl_swarm.sh
 ```
 
-### Web Arayüzü Erişimi
+Tarayıcıda: `http://localhost:3000/`
 
-WSL'den **localhost:3000** adresine erişebilirsiniz:
+---
+
+## Dosya Erişimi
+
+### Windows'tan WSL Dosyalarını Gör
+
+Windows Explorer'da:
 ```
-http://localhost:3000/
+\\wsl.localhost\Ubuntu\home\username\rl-swarm
 ```
 
-## GPU Desteği (İsteğe Bağlı)
+### WSL içinde Windows Dosyaları
 
-Windowslu bilgisayarda NVIDIA GPU kullanmak istiyorsanız:
+```bash
+# C: sürücüsü
+ls /mnt/c/
 
-### NVIDIA Driver Yükleme (Windows tarafı)
+# Desktop
+ls /mnt/c/Users/username/Desktop/
+```
 
-1. https://www.nvidia.com/Download/driverDetails.aspx adresini ziyaret edin
-2. GPU'nuz için driver indirin
-3. Kurun
-4. Bilgisayarı yeniden başlatın
+---
 
-### WSL2 Sonrasında Kontrol
+## GPU Desteği
 
+NVIDIA GPU'nuz varsa:
+
+**1. Windows'ta Driver Yükle**
+- https://www.nvidia.com/Download/driverDetails.aspx
+- GPU'nız için driver indirin
+- Kurup bilgisayarı yeniden başlatın
+
+**2. WSL'de Kontrol**
 ```bash
 nvidia-smi
 ```
 
-Eğer çalışırsa, GPU hazırsa demektir!
+Çalışırsa GPU hazır demek.
+
+---
 
 ## Sorunlar
 
-### "Türü dönüştürme hatası" (WSL komutunda)
+### "Erişim Reddedildi" PowerShell'de
 
-**Çözüm:**
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-### WSL'de disk alanı doldu
+### Disk Dolu
 
-**Çözüm:**
+WSL fazla yer kapılıyor mu?
+
 ```bash
-# WSL içinden
-du -sh /mnt/c/*  # Windows sürücülerini kontrol et
-du -sh ~/*       # Home dizinini kontrol et
+# WSL içinde
+du -sh ~/*  # Home dizini kontrol
+du -sh /   # Tüm sistem
 ```
 
-### NVIDIA GPU bulunmuyor
+Büyük dosyalar silin, özellikle `/var/log`.
 
-**Çözüm:**
+### GPU Görünmüyor
+
 ```bash
-# WSL2 Resmi Sistem Gereksinimi Kontrol
-uname -r  # Kernel versiyonu 5.10+ olmalı
+# WSL kernel versiyonu kontrol
+uname -r  # 5.10+ olmalı
 
-# Driver Yeniden Yükle (Windows tarafında)
-# Bilgisayarı Yeniden Başlat
-
-# WSL içinde kontrol
-nvidia-smi --query-gpu=name --format=csv
+# CUDA kontrol
+nvcc --version
 ```
 
-## İpuçları
-
-1. **Dosya Yönetimi:**
-   - Windows dosyalarını `/mnt/c/` altında bulabilirsiniz
-   - WSL dosyalarına Windows'tan erişmek için: `\\wsl.localhost\Ubuntu\`
-
-2. **Performans:**
-   - Windows sürücülerinde değil, WSL sürücüsünde çalışın
-   - `/home/` altında dosyalar daha hızlıdır
-
-3. **Backup:**
-   ```bash
-   # swarm.pem dosyasını yedekleyin
-   cp ~/.../rl-swarm/swarm.pem /mnt/c/Users/[Ad]/Desktop/swarm.pem
-   ```
-
-## Kaynaklar
-
-- [WSL2 Resmi Belgesi](https://docs.microsoft.com/en-us/windows/wsl/)
-- [NVIDIA GPU + WSL2](https://docs.nvidia.com/cuda/wsl-user-guide/)
-- [Windows Terminal](https://www.microsoft.com/en-us/p/windows-terminal/)
+Hâlâ sorun varsa:
+1. NVIDIA Driver'ı güncelleyin (Windows)
+2. WSL'yi güncelle: `wsl --update`
+3. Bilgisayar yeniden başlat
 
 ---
 
-**Sorun mu yaşıyorsunuz?** [Ana Sorun Giderme Rehberine](SORUN-GIDERME.md) bakın.
+## İpuçlar
+
+**Terminal Seçimi:**
+- Windows Terminal (modern ve hızlı)
+- PowerShell (yerleşik)
+- Ubuntu uygulaması (basit)
+
+**Performans:**
+- WSL diskinde dosyalar tutuyor (/home/) → hızlı
+- Windows diskine (/mnt/c/) yazma → daha yavaş
+
+**Backup:**
+```bash
+cp ~/rl-swarm/swarm.pem /mnt/c/Users/username/Desktop/
+```
+
+---
+
+## Kaynaklar
+
+- [WSL Resmi Belgesi](https://docs.microsoft.com/en-us/windows/wsl/)
+- [NVIDIA CUDA + WSL](https://docs.nvidia.com/cuda/wsl-user-guide/)
+- [Windows Terminal](https://www.microsoft.com/store/productId/9N0DX20HK701)
+
+Sorun varsa [Sorun Giderme](SORUN-GIDERME.md) rehberine bak.

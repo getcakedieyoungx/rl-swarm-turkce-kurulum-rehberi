@@ -1,184 +1,231 @@
 # VPS Sunucuya RL-Swarm Kurulumu
 
+Kendi sunucunuzda RL-Swarm çalıştırmak istiyorsanız, bu rehber adım adım anlatır.
+
+---
+
 ## Sunucu Seçimi
 
-### Önerilen Sunucular
+### Uygun Sağlayıcılar
 
-**Budget-Friendly:**
-- [Hetzner](https://www.hetzner.com/) - Uygun fiyat, iyi performans
-- [DigitalOcean](https://www.digitalocean.com/) - Yapılandırması kolay
-- [Linode](https://www.linode.com/) - Türkiye'den iyi latency
+- **Hetzner** - İyi fiyat, güvenilir
+- **DigitalOcean** - Kolay kullanım
+- **Linode** - Türkiye'ye yakın
+- **AWS/Google Cloud** - Daha pahalı ama esnek
 
-**Yüksek Performans:**
-- [AWS EC2](https://aws.amazon.com/ec2/)
-- [Google Cloud](https://cloud.google.com/)
-- [Azure](https://azure.microsoft.com/)
+### Minimum Özellikler
 
-### Minimum Yapılandırma
+**CPU-only:**
+- 16+ core
+- 64GB RAM
+- 100GB SSD
 
-**CPU-Only:**
-- CPU: 16+ çekirdek
-- RAM: 64GB
-- Disk: 100GB SSD
-- Bant genişliği: Unlimited
+**GPU:**
+- NVIDIA RTX 3090/4090
+- 8+ core CPU
+- 32GB+ RAM
+- 100GB+ SSD
 
-**GPU (Önerilen):**
-- GPU: NVIDIA RTX 3090/4090
-- CPU: 8+ çekirdek
-- RAM: 32GB+
-- Disk: 100GB+ SSD
+---
 
-## Adım 1: Sunucuya Bağlanma
+## SSH Bağlantısı
 
-### SSH Anahtarı Oluşturma (Yerel Makinenizde)
-
-**Windows (PowerShell):**
-```powershell
-ssh-keygen -t rsa -b 4096 -f $env:USERPROFILE\.ssh\id_rsa
-```
-
-**Linux/Mac:**
-```bash
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
-```
-
-### Sunucuya Anahtarı Yükleme
+### Yerel Makinede SSH Anahtarı Oluştur
 
 ```bash
-# Sunucuda
-mkdir -p ~/.ssh
-paste-your-public-key >> ~/.ssh/authorized_keys
-chmod 700 ~/.ssh
-chmod 600 ~/.ssh/authorized_keys
+ssh-keygen -t rsa -b 4096
+# Sorularına enter diye cevap ver
 ```
 
-### SSH Bağlantısı
+Anahtarlar `~/.ssh/` dizininde saklanır:
+- `id_rsa` → Özel anahtar (gizle!)
+- `id_rsa.pub` → Genel anahtar (sunucuya koy)
+
+### Sunucuya Bağlan
 
 ```bash
-# Linux/Mac
-ssh -i ~/.ssh/id_rsa root@sunucu_ip
+# İlk kez: şifre ile
+ssh root@sunucu_ip
 
-# Windows PowerShell
-ssh -i $env:USERPROFILE\.ssh\id_rsa root@sunucu_ip
+# Sonra: anahtar ile (otomatik)
+# ~/.ssh/config dosyası oluşturup:
+Host myserver
+    HostName sunucu_ip
+    User root
+    IdentityFile ~/.ssh/id_rsa
+
+# Sonra sadece yazıp enter
+ssh myserver
 ```
 
-## Adım 2: Sunucu Hazırlanması
+---
 
-### İlk Erişim Konfigürasyonu
+## İlk Kurulum
+
+### Sunucuya Giriş
 
 ```bash
-# SSH portu değiştir (güvenlik)
-sudo nano /etc/ssh/sshd_config
-# Port 22 satırını bulun ve 2222 gibi yeni port ayarlayın
-sudo systemctl restart sshd
+ssh root@sunucu_ip
 ```
 
-### Firewall Yapılandırması
+### Sistem Hazırlama
 
 ```bash
-# Ubuntu
+# Güncelle
+sudo apt update && sudo apt upgrade -y
+
+# Firewall
 sudo ufw enable
-sudo ufw allow 2222/tcp  # SSH (yeni port)
-sudo ufw allow 3000/tcp  # RL-Swarm web arayüzü
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
+sudo ufw allow 22/tcp   # SSH
+sudo ufw allow 3000/tcp # Web arayüzü
 ```
 
-## Adım 3: Otomatik Kurulum
+### RL-Swarm Kurulması
 
-### Script ile Kurulum
+Yukarıdaki "Manuel Kurulum" adımlarını izle. Veya otomatik script:
 
 ```bash
-# Repository'yi klonlayın
-git clone https://github.com/getcakedieyoungx/rl-swarm-turkce-kurulum-rehberi.git
-cd rl-swarm-turkce-kurulum-rehberi
-
-# Script'i çalıştırın
-chmod +x scripts/install-ubuntu.sh
-./scripts/install-ubuntu.sh
+wget https://raw.githubusercontent.com/.../install-ubuntu.sh
+chmod +x install-ubuntu.sh
+./install-ubuntu.sh
 ```
 
-### Manuel Kurulum
+---
 
-Bkz. Ana README'nin "1. Bağımlılıkları Yükleme" bölümü
+## Çalıştırma
 
-## Adım 4: RL-Swarm Başlatma
+### Screen ile Arka Planda
 
-### Screen Kullanarak Arka Planda Çalıştırma
+SSH bağlantısı kapansak dahi RL-Swarm çalışmaya devam eder.
 
 ```bash
-# Screen oturumu oluştur
 screen -S rl-swarm
 
-# RL-Swarm dizinine git
-cd rl-swarm
-
-# Sanal ortamı etkinleştir
+cd ~/rl-swarm
 source .venv/bin/activate
-
-# Çalıştır
 ./run_rl_swarm.sh
 
-# Screen'den ayrıl: Ctrl+A, D
+# Çık: Ctrl+A, D
+# Geri dön: screen -r rl-swarm
+# Sonlandır: screen -XS rl-swarm quit
 ```
 
 ### Web Arayüzüne Erişim
 
-**Yerel Bağlantı (Sunucuda):**
+**SSH Tunnel (güvenli):**
 ```bash
-curl http://localhost:3000
+# Yerel makinede
+ssh -L 3000:localhost:3000 root@sunucu_ip
+
+# Tarayıcıda
+http://localhost:3000/
 ```
 
-**Uzaktan Bağlantı (SSH Tunnel):**
-
-```bash
-# Yerel makinenizde
-ssh -i ~/.ssh/id_rsa -L 3000:localhost:3000 root@sunucu_ip
-
-# Ardından tarayıcıda
-http://localhost:3000
-```
-
-**LocalTunnel (Herkese Açık):**
-
+**LocalTunnel (herkes görebilir):**
 ```bash
 # Sunucuda
 npm install -g localtunnel
 lt --port 3000
 
-# Çıkan URL'yi tarayıcıda açın
+# Çıkan URL'yi tarayıcıda aç
 ```
 
-## Adım 5: Yönetim
+---
 
-### Screen Komutları
+## Monitoring
+
+### Sistem Kaynakları
 
 ```bash
-# Oturumlı listele
-screen -ls
+# CPU, RAM, Processes
+top
 
-# Oturuma geri dön
-screen -r rl-swarm
+# GPU (varsa)
+watch -n 1 nvidia-smi
 
-# Oturumu sonlandır
-screen -XS rl-swarm quit
+# Disk
+df -h
+du -sh ~/rl-swarm
 ```
 
-### Dosya Yönetimi (SCP)
+### RL-Swarm Logları
 
 ```bash
-# Sunucudan indirme
-scp -r root@sunucu_ip:~/rl-swarm/logs ./
+cd ~/rl-swarm
 
-# Sunucuya yükleme
-scp -r ./file root@sunucu_ip:~/rl-swarm/
+# Son 100 satır
+tail -100 logs/swarm.log
+
+# Canlı
+tail -f logs/swarm.log
+
+# Hata ara
+grep ERROR logs/swarm.log
 ```
 
-### SFTP Dosya Yönetimi
+---
+
+## Yedekleme
+
+### swarm.pem Yedeği
+
+```bash
+# Sunucudan indir
+scp root@sunucu_ip:~/rl-swarm/swarm.pem ~/Desktop/
+
+# Veya şifrele ve sakla
+openssl enc -aes-256-cbc -in ~/rl-swarm/swarm.pem -out ~/swarm.pem.enc
+```
+
+### Otomatik Cron Job
+
+```bash
+crontab -e
+
+# Günlük backup saat 02:00'de
+0 2 * * * tar -czf ~/backup/rl-swarm-$(date +\%Y\%m\%d).tar.gz ~/rl-swarm/swarm.pem
+```
+
+---
+
+## Sorunlar
+
+### SSH Bağlantı Reddedildi
+
+```bash
+# Sunucuda
+sudo systemctl status ssh
+sudo systemctl restart ssh
+
+# Firewall kontrol
+sudo ufw status
+sudo ufw allow 22/tcp
+```
+
+### Disk Dolu
+
+```bash
+# Nerede harcandığını bul
+du -sh /* | sort -rh
+
+# Log temizle
+rm -rf ~/rl-swarm/logs/*
+```
+
+### GPU Bulunamıyor
+
+```bash
+nvidia-smi  # Tespit et
+cat /proc/version  # Kernel kontrol
+```
+
+---
+
+## SFTP ile Dosya Yönetimi
 
 ```bash
 # Bağlan
-sftp -P 2222 root@sunucu_ip
+sftp root@sunucu_ip
 
 # İndir
 get swarm.pem
@@ -190,107 +237,6 @@ put swarm.pem
 exit
 ```
 
-## Adım 6: Monitoring
-
-### Sistem Kaynakları
-
-```bash
-# CPU ve RAM kullanımı
-top
-
-# GPU kullanımı
-watch -n 1 nvidia-smi
-
-# Disk kullanımı
-df -h
-du -sh ~/rl-swarm
-
-# Network
-netstat -tuln | grep LISTEN
-```
-
-### Process Monitoring
-
-```bash
-# Python process'leri
-ps aux | grep python
-
-# Network bağlantıları
-netstat -an | grep 3000
-lsof -i :3000
-```
-
-## Sorunlar ve Çözümler
-
-### "Connection refused" SSH hatası
-
-**Çözüm:**
-```bash
-# Sunucu tarafında SSH servisini kontrol et
-sudo systemctl status ssh
-sudo systemctl restart ssh
-
-# Firewall kuralları
-sudo ufw status
-```
-
-### Disk Alanı Doldu
-
-**Çözüm:**
-```bash
-# Büyük dosyaları bul
-du -sh /* | sort -rh | head -10
-
-# Log dosyalarını temizle
-rm -rf ~/rl-swarm/logs/*
-df -h  # Kontrol et
-```
-
-### GPU Algılanmıyor
-
-**Çözüm:**
-```bash
-# Driver kontrol
-nvidia-smi
-
-# CUDA Kontrol
-nvcc --version
-
-# Tekrar Kurun
-sudo apt purge nvidia-*
-sudo apt autoremove
-# Driver yeniden yükleme linkini sunucu sağlayıcıdan al
-```
-
-## Backup ve Güvenlik
-
-### Otomatik Backup
-
-```bash
-# Cron job oluştur
-crontab -e
-
-# Günlük backup (UTC 02:00)
-0 2 * * * tar -czf ~/backup/rl-swarm-$(date +%Y%m%d).tar.gz ~/rl-swarm/swarm.pem
-```
-
-### Dosya Şifrelemesi
-
-```bash
-# swarm.pem'i şifrele
-openssl enc -aes-256-cbc -in ~/rl-swarm/swarm.pem -out ~/swarm.pem.enc
-
-# İhtiyaç duyulduğunda çöz
-openssl enc -aes-256-cbc -d -in ~/swarm.pem.enc -out ~/swarm.pem
-```
-
-## Kaynaklar
-
-- [Ubuntu Server Guide](https://ubuntu.com/server/docs)
-- [SSH Best Practices](https://wiki.debian.org/SSH)
-- [UFW Firewall](https://wiki.ubuntu.com/UncomplicatedFirewall)
-- [Screen Kullanımı](https://www.gnu.org/software/screen/manual/)
-
 ---
 
-**Sorun mu yaşıyorsunuz?** [Ana Sorun Giderme Rehberine](SORUN-GIDERME.md) bakın.
+Sorunlar? [Sorun Giderme Rehberi](SORUN-GIDERME.md)'ne bak.
