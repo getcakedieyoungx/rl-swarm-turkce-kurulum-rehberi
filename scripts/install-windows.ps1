@@ -1,99 +1,74 @@
-# RL-Swarm Türkçe Kurulum Script'i - Windows PowerShell
-# Bu script gerekli tüm bağımlılıkları yükler ve RL-Swarm'ı kurar
+# RL-Swarm Windows PowerShell Kurulum Script'i
+# WSL2 ve Ubuntu üzerinde kurulum yapıp RL-Swarm'ı hazırlar
 
-Write-Host "" -ForegroundColor Green
-Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║        RL-Swarm Otomatik Kurulum (Windows PowerShell)          ║" -ForegroundColor Cyan
-Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "   RL-Swarm Windows Kurulum" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Fonksiyonlar
-function Print-Step {
-    param([int]$Number, [string]$Message)
-    Write-Host "[ADIM $Number] $Message" -ForegroundColor Blue
+function Info {
+    Write-Host "[INFO] $args" -ForegroundColor Blue
 }
 
-function Print-Success {
-    param([string]$Message)
-    Write-Host "[BAŞARILI] $Message" -ForegroundColor Green
+function Success {
+    Write-Host "[OK] $args" -ForegroundColor Green
 }
 
-function Print-Error {
-    param([string]$Message)
-    Write-Host "[HATA] $Message" -ForegroundColor Red
+function Error {
+    Write-Host "[HATA] $args" -ForegroundColor Red
 }
 
-function Print-Warning {
-    param([string]$Message)
-    Write-Host "[UYARI] $Message" -ForegroundColor Yellow
-}
-
-# 1. WSL kontrolü
-Print-Step 1 "Windows Subsystem for Linux (WSL) kontrol ediliyor..."
+# WSL2 kontrolü
+Info "WSL2 kontrol ediliyor..."
 
 $wslCheck = wsl --list --verbose 2>$null
-if ($LASTEXITCODE -eq 0) {
-    Print-Success "WSL bulundu"
-} else {
-    Print-Error "WSL bulunamadı!"
-    Write-Host "Lütfen önce WSL2 ve Ubuntu'yu kurun:" -ForegroundColor Yellow
-    Write-Host "  1. PowerShell'i Yönetici olarak açın" -ForegroundColor Gray
-    Write-Host "  2. Şu komutu çalıştırın: wsl --install -d Ubuntu" -ForegroundColor Gray
-    Write-Host "  3. Bilgisayarı yeniden başlatın" -ForegroundColor Gray
-    Write-Host "  4. Bu script'i tekrar çalıştırın" -ForegroundColor Gray
+if ($LASTEXITCODE -ne 0) {
+    Error "WSL2 bulunamadı!"
+    Write-Host ""
+    Write-Host "Lütfen şöyle kurun:" -ForegroundColor Yellow
+    Write-Host "1. PowerShell'i Yönetici olarak açın" -ForegroundColor Gray
+    Write-Host "2. wsl --install -d Ubuntu çalıştırın" -ForegroundColor Gray
+    Write-Host "3. Bilgisayarı yeniden başlatın" -ForegroundColor Gray
     exit 1
 }
 
-# 2. Python kontrolü
-Print-Step 2 "Python3 yüklü mü kontrol ediliyor (WSL içinde)..."
+Success "WSL2 bulundu"
 
+# Python kontrol
+Info "Python kontrol ediliyor..."
 wsl python3 --version
-if ($LASTEXITCODE -eq 0) {
-    Print-Success "Python3 bulundu"
-} else {
-    Print-Warning "Python3 WSL'de bulunamadı. WSL'de kurulacak."
+
+if ($LASTEXITCODE -ne 0) {
+    Error "Python WSL'de yüklü değil. Kurulum script'i Python'u yükleyecek."
 }
 
-# 3. Git kontrolü
-Print-Step 3 "Git yüklü mü kontrol ediliyor..."
-
-$gitCheck = git --version 2>$null
-if ($LASTEXITCODE -eq 0) {
-    Print-Success "Git bulundu"
-} else {
-    Print-Error "Git bulunamadı!"
-    Write-Host "Lütfen Git'i https://git-scm.com adresinden indirip kurun" -ForegroundColor Yellow
-    exit 1
-}
-
-# 4. Repository klonlama
-Print-Step 4 "RL-Swarm repository'si klonlanıyor..."
+# Repository klonlama
+Info "RL-Swarm klonlanıyor..."
 
 if (Test-Path "rl-swarm") {
-    Print-Warning "rl-swarm dizini zaten mevcut, atlanıyor"
+    Write-Host "rl-swarm dizini var, atlanıyor" -ForegroundColor Yellow
 } else {
     git clone https://github.com/gensyn-ai/rl-swarm/
-    Print-Success "Repository klonlandı"
+    Success "Klonlama bitti"
 }
 
-# 5. WSL'de kurulum
-Print-Step 5 "WSL'de gerekli paketler yükleniyor..."
-
-wsl -- bash -c "cd rl-swarm && python3 -m venv .venv"
-Print-Success "Python sanal ortamı oluşturuldu"
+# WSL'de Python ortamı
+Info "Python ortamı oluşturuluyor..."
+wsl -d Ubuntu -- bash -c "cd rl-swarm && python3 -m venv .venv"
+Success "Ortam oluşturuldu"
 
 Write-Host ""
-Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "║                    KURULUM TAMAMLANDI!                         ║" -ForegroundColor Green
-Write-Host "╠════════════════════════════════════════════════════════════════╣" -ForegroundColor Green
-Write-Host "║  RL-Swarm'ı başlatmak için şu komutları çalıştırın:            ║" -ForegroundColor Green
-Write-Host "║                                                                ║" -ForegroundColor Green
-Write-Host "║  PowerShell'de:                                                ║" -ForegroundColor Green
-Write-Host "║  $ wsl                                                         ║" -ForegroundColor Green
-Write-Host "║  $ cd rl-swarm                                                 ║" -ForegroundColor Green
-Write-Host "║  $ source .venv/bin/activate                                   ║" -ForegroundColor Green
-Write-Host "║  $ ./run_rl_swarm.sh                                           ║" -ForegroundColor Green
-Write-Host "║                                                                ║" -ForegroundColor Green
-Write-Host "║  Daha fazla bilgi: https://github.com/gensyn-ai/rl-swarm     ║" -ForegroundColor Green
-Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "   KURULUM TAMAMLANDI" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Başlatmak için:" -ForegroundColor Green
+Write-Host ""
+Write-Host "  wsl" -ForegroundColor Gray
+Write-Host "  cd rl-swarm" -ForegroundColor Gray
+Write-Host "  source .venv/bin/activate" -ForegroundColor Gray
+Write-Host "  ./run_rl_swarm.sh" -ForegroundColor Gray
+Write-Host ""
+Write-Host "Daha fazla bilgi: docs/windows-wsl-kurulum.md" -ForegroundColor Yellow
 Write-Host ""
