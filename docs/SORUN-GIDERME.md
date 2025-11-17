@@ -1,62 +1,66 @@
-# RL-Swarm Sorun Giderme Rehberi
+# Sorun Giderme Rehberi
 
-## Sık Sorulan Sorunlar ve Çözümleri
+RL-Swarm kurulumu sırasında karşılaşabileceğiniz yaygın sorunlar ve çözümleri.
 
-### 1. "Python 3.10 veya üstü gereklidir" Hatası
+---
 
-**Sorun:** Eski Python sürümü yüklü
+## Python Versiyonu Hatası
+
+**Hata:** `Python 3.10 veya daha yeni gerekli`
 
 **Çözüm:**
 ```bash
-python3 --version  # Sürümü kontrol et
+python3 --version  # Hangi versiyonu var bak
 
-# Ubuntu 20.04'te Python 3.10 yükleme
+# Ubuntu 20.04'te Python 3.10 yükle
 sudo apt update
-sudo apt install -y python3.10 python3.10-venv python3.10-dev
+sudo apt install -y python3.10 python3.10-venv
 
-# Varsayılan Python'u değiştir
+# Varsayılan yap
 sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 ```
 
 ---
 
-### 2. "Module 'hivemind' Not Found" Hatası
+## Sanal Ortam Bulunamıyor
 
-**Sorun:** Sanal ortam etkinleştirilmemiş
+**Hata:** `ModuleNotFoundError: No module named 'hivemind'`
+
+**Sebep:** Sanal ortam aktif değil
 
 **Çözüm:**
 ```bash
 cd rl-swarm
 source .venv/bin/activate  # Linux/Mac
-# veya
-.venv\Scripts\Activate.ps1  # Windows PowerShell
+
+# Windows PowerShell:
+.venv\Scripts\Activate.ps1
 ```
 
 ---
 
-### 3. CUDA Bellek Yetersiz (Out of Memory)
+## GPU Belleği Yetersiz
 
-**Sorun:** GPU belleği doldu
+**Hata:** `CUDA out of memory` veya `RuntimeError: CUDA out of memory`
 
-**Çözüm - Seçenek 1: Küçük model kullanın**
+**Seçenek 1: Küçük model seç**
 ```bash
-# Kurulum sırasında şu modeli seçin:
-Gensyn/Qwen2.5-0.5B-Instruct
+# Kurulum sırasında model sorulduğunda:
+# Gensyn/Qwen2.5-0.5B-Instruct
 ```
 
-**Çözüm - Seçenek 2: Optimizasyon**
+**Seçenek 2: Bellek ayarlarını optimize et**
 ```bash
-# Konfigürasyon dosyasını düzenle
 cd rl-swarm
 nano rgym_exp/config/rg-swarm.yaml
 
 # Şu değerleri azalt:
-num_train_samples: 1
-num_transplant_trees: 1
-beam_size: 20
+num_train_samples: 1      # varsayılan daha yüksek
+num_transplant_trees: 1   # varsayılan daha yüksek
+beam_size: 20             # varsayılan daha yüksek
 ```
 
-**Çözüm - Seçenek 3: Çevre değişkenleri**
+**Seçenek 3: Çevre değişkenleri ayarla**
 ```bash
 export PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True,max_split_size_mb:128"
 ./run_rl_swarm.sh
@@ -64,34 +68,44 @@ export PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True,max_split_size_mb:128"
 
 ---
 
-### 4. "Localhost:3000 Sayfası Açılmıyor"
+## Localhost:3000 Açılmıyor
 
-**Sorun:** Web arayüzü yüklenmediği
-
-**Çözüm - Yerel Makine:**
+**Yerel makinede:**
 ```bash
-# Tarayıcı konsolunda kontrol et
+# Tarayıcıda dene
 http://localhost:3000/
 
-# Port dinlenip dinlenmediği kontrol et
+# Port dinlenip dinlenmediğini kontrol et
 sudo lsof -i :3000
+
+# 3 dakika bekle, sayfa yüklenebilir
 ```
 
-**Çözüm - VPS/Bulut:**
+**VPS/Cloud'da SSH Tunnel ile:**
 ```bash
-# Terminal 1: SSH Tunnel
-ssh -L 3000:localhost:3000 user@server-ip
+# Yerel makinende bu komutu çalıştır
+ssh -L 3000:localhost:3000 user@server_ip
 
-# Terminal 2: LocalTunnel (opsiyonel)
+# Sonra tarayıcıda
+http://localhost:3000/
+```
+
+**Herkese açık (LocalTunnel):**
+```bash
+# Sunucuda
 npm install -g localtunnel
 lt --port 3000
+
+# Çıkan URL'yi tarayıcıda aç
 ```
 
 ---
 
-### 5. "Daemon Failed to Start in 15.0 Seconds" Hatası
+## Daemon Başlamıyor
 
-**Sorun:** Daemon başlama zaman aşımı
+**Hata:** `Daemon failed to start in 15.0 seconds`
+
+**Sebep:** Timeout süresi yeterli değil
 
 **Çözüm:**
 ```bash
@@ -99,185 +113,281 @@ cd rl-swarm
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Timeout değerini artır
-DEMON_CONFIG=$(python3 -c "import hivemind.p2p.p2p_daemon as m; print(m.__file__)")
-nano "$DEMON_CONFIG"
+# Daemon config dosyasını açıkla
+DEMON_FILE=$(python3 -c "import hivemind.p2p.p2p_daemon as m; print(m.__file__)")
+nano "$DAEMON_FILE"
 
-# Satırı bul ve değiştir:
-# startup_timeout: float = 15  →  startup_timeout: float = 120
+# Şu satırı bul:
+# startup_timeout: float = 15
+# Bunu yap:
+# startup_timeout: float = 120
+
+# Kaydet: Ctrl+X, Y, Enter
 ```
 
 ---
 
-### 6. "swarm.pem" Dosyası Kayıp
+## swarm.pem Dosyası Kayıp
 
-**Sorun:** Kimlik dosyası kaybetti
+**Sorun:** Düğüm kimlik dosyası silindi veya kaybetti
 
-**Çözüm:**
+**Çözüm 1: Yeni oluştur**
 ```bash
 cd rl-swarm
-rm swarm.pem  # Eski dosyayı sil (varsa)
-
-# Yeniden çalıştır - yeni dosya oluşturulacak
 ./run_rl_swarm.sh
+# Aynı email ile giriş yap, yeni swarm.pem oluşturulacak
 ```
 
-**NOT:** Eğer eski swarm.pem'i yedeklemiş iseniz:
+**Çözüm 2: Yedekten geri yükle**
 ```bash
-cp ~/backup/swarm.pem ./swarm.pem
+cd rl-swarm
+cp ~/Desktop/swarm.pem.backup ./swarm.pem
 chmod 600 swarm.pem
-```
-
----
-
-### 7. Eğitim Yavaş veya Durmuş Görünüyor
-
-**Sorun:** Process yavaş çalışıyor
-
-**Kontrol Listesi:**
-```bash
-# 1. GPU kullanılıyor mu?
-gpu watch -n 1 nvidia-smi
-
-# 2. CPU kullanımı?
-top
-
-# 3. Disks dolmadı mı?
-df -h
-
-# 4. Logları kontrol et
-tail -f logs/swarm.log
-```
-
-**Çözüm:**
-- Diğer programları kapatın
-- Küçük model seçin
-- RAM/VRAM kontrol edin
-
----
-
-### 8. "Permission Denied" Hatası
-
-**Sorun:** Script dosyası çalıştırılamıyor
-
-**Çözüm:**
-```bash
-# İzinleri ver
-chmod +x run_rl_swarm.sh
-chmod +x scripts/install-ubuntu.sh
-
-# Tekrar çalıştır
 ./run_rl_swarm.sh
 ```
 
 ---
 
-### 9. "Git Pull" Sonrası Hatalar
+## Eğitim Çok Yavaş veya Durmuş Görünüyor
 
-**Sorun:** Güncelleme sonrası sorunlar
+**GPU kullanılıyor mu?**
+```bash
+watch -n 1 nvidia-smi
+```
+GPU kullanım yüzdesini gör, sıfırsa GPU paralı işler yok.
+
+**CPU ne kadar kullanılıyor?**
+```bash
+top
+```
+Python process'lerin CPU kullanımını kontrol et.
+
+**Disk dolu mu?**
+```bash
+df -h
+du -sh ~/rl-swarm
+```
+
+**Logları kontrol et:**
+```bash
+tail -100 logs/swarm.log
+
+# Hata ara
+grep -i error logs/swarm.log
+
+# CUDA problemleri
+grep -i cuda logs/swarm.log
+```
+
+**Eğer gerçekten takılmış gibiyse:**
+- Başka ağır program çalışıyor mu? Kapat
+- RAM yeterli mi? `free -h` ile kontrol et
+- Küçük model dene: `Gensyn/Qwen2.5-0.5B-Instruct`
+
+---
+
+## MacBook'ta Bellek Sorunu
+
+**Hata:** `RuntimeError` veya eğitim çöküyor
+
+**Çözüm:**
+```bash
+export PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
+./run_rl_swarm.sh
+```
+
+---
+
+## Windows WSL'de Sorunlar
+
+**"Dosya bulunamadı" hatası**
+```bash
+# WSL içinde Windows dosyaları /mnt/ altında
+# C: sürücüsü = /mnt/c/
+cd /mnt/c/Users/YourName/Desktop
+```
+
+**WSL'de disk alanı biterse:**
+```bash
+# Nerede disk alanı harcandığını bulun
+du -sh ~/*
+
+# Eski logları sil
+rm -rf logs/*
+
+# Temizlik
+df -h
+```
+
+---
+
+## Git Pull Sonrası Sorunlar
+
+**Hata:** Güncellemeden sonra komutlar çalışmıyor
 
 **Çözüm:**
 ```bash
 cd rl-swarm
 
-# Temiz kurulum
+# Yerel değişiklikleri sıfırla
 git reset --hard
 git clean -fd
 git pull
 
-# Sanal ortamı yenile
+# Sanal ortamı temizle
 rm -rf .venv
 python3 -m venv .venv
 source .venv/bin/activate
+
+# Tekrar başlat
+./run_rl_swarm.sh
 ```
 
 ---
 
-### 10. Model Upload Hatası (HuggingFace)
+## HuggingFace Upload Hatası
 
-**Sorun:** Model yükleme başarısız
+**Sorun:** Model yüklenemiyor
 
-**Çözüm:**
+**Kontrol listesi:**
 ```bash
-# Token'ı kontrol et
+# 1. Token geçerli mi?
 huggingface-cli login
 
-# Yeterli alan var mı kontrol et
+# 2. Yeterli disk alanı var mı?
 df -h
-du -sh .
 
-# Token'ı yenile
+# 3. Internet bağlantısı stabil mi?
+ping huggingface.co
+
+# 4. Token'ı yenile
 huggingface-cli logout
 huggingface-cli login
 ```
 
 ---
 
-## Log Dosyalarını İnceleme
+## SSH Bağlantı Kopuyor
 
-**Ana Log Dosyaları:**
+**Sorun:** VPS'de çalışan RL-Swarm SSH kesintisinden sonra çöküyor
+
+**Çözüm: Screen kullan**
 ```bash
+screen -S rl-swarm
 cd rl-swarm
+source .venv/bin/activate
+./run_rl_swarm.sh
 
-# Ana uygulama log'ları
-tail -f logs/swarm.log
+# Ayrıl: Ctrl+A, D
+# Geri dön: screen -r rl-swarm
 
-# Web arayüzü log'ları
-tail -f logs/yarn.log
+# Veya tmux
+tmux new -s rl-swarm
+cd rl-swarm
+source .venv/bin/activate
+./run_rl_swarm.sh
 
-# Eğitim hataları
-grep -i error logs/swarm.log
+# Ayrıl: Ctrl+B, D
+# Geri dön: tmux attach -t rl-swarm
+```
 
-# CUDA hataları
-grep -i cuda logs/swarm.log
+---
 
-# Tüm uyarıları göster
-grep -i warning logs/swarm.log
+## Permission Denied
+
+**Hata:** `Permission denied` script çalıştırırken
+
+**Çözüm:**
+```bash
+chmod +x run_rl_swarm.sh
+chmod +x scripts/install-ubuntu.sh
+./run_rl_swarm.sh
+```
+
+---
+
+## NVIDIA GPU Bulunamıyor
+
+**Kontrol:**
+```bash
+nvidia-smi
+```
+
+Çalışmazsa:
+```bash
+# Windows WSL'de
+nvidia-smi --query-gpu=name --format=csv
+
+# Linux'ta driver versiyonu
+nvcc --version
+cat /proc/version  # Kernel versiyonu kontrol et
+```
+
+**Çözüm:**
+- Windows'ta: NVIDIA Driver yeniden yükle ve bilgisayarı yeniden başlat
+- Linux'ta: `sudo apt install nvidia-driver-525` (veya yeni sürüm)
+
+---
+
+## Logları İnceleme
+
+**Tüm loglar `logs/` klasöründe:**
+```bash
+cd rl-swarm/logs
+
+# Ana uygulama
+tail -f swarm.log
+
+# Web arayüzü
+tail -f yarn.log
+
+# Eğitim logları
+ls wandb/
+
+# Son 50 hata satırı
+grep ERROR swarm.log | tail -50
 ```
 
 ---
 
 ## Sistem Bilgisi Toplama
 
-Hata raporlarken bu bilgileri toplayın:
+Hata raporlarken bu bilgileri paylaşın:
 
 ```bash
-# İşletim Sistemi
+# OS bilgisi
 uname -a
 
-# Python Sürümü
+# Python
 python3 --version
 
-# Sanal Ortam Paketleri
-source .venv/bin/activate
-pip list
-
-# GPU Bilgisi (varsa)
+# GPU
 nvidia-smi
 
 # RAM/Disk
 free -h
 df -h
 
-# Network
-netstat -tuln | grep 3000
+# RL-Swarm versiyon
+cd rl-swarm
+git log --oneline -1
 
-# Git Bilgisi
-git log --oneline -5
-git status
+# Paketler
+source .venv/bin/activate
+pip list | grep -E "torch|cuda|hivemind"
 ```
 
 ---
 
-## Destek Al
+## Yardım Edin
 
-**Sorun Bulunamadı?**
+Sorun çözülemedi?
 
-1. **GitHub Issues:** https://github.com/gensyn-ai/rl-swarm/issues
-2. **Discord:** https://discord.gg/AdnyWNzXh5
-3. **Resmi Dokümantasyon:** https://docs.gensyn.ai/testnet/rl-swarm
-4. **Email:** support@gensyn.ai
+1. [GitHub Issues](https://github.com/gensyn-ai/rl-swarm/issues) - Resmi RL-Swarm
+2. [Bu Repo Issues](https://github.com/getcakedieyoungx/rl-swarm-turkce-kurulum-rehberi/issues) - Türkçe rehber
+3. [Discord](https://discord.gg/AdnyWNzXh5) - Gensyn Discord
+4. [Resmi Docs](https://docs.gensyn.ai/testnet/rl-swarm) - Ingilizce belge
 
 ---
 
-**En Son Güncelleme:** Kasım 2025
+**Son güncelleme:** Kasım 2025
