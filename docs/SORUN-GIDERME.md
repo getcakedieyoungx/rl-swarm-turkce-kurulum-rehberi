@@ -113,8 +113,8 @@ cd rl-swarm
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Daemon config dosyasını açıkla
-DEMON_FILE=$(python3 -c "import hivemind.p2p.p2p_daemon as m; print(m.__file__)")
+# Daemon config dosyasını aç
+DAEMON_FILE=$(python3 -c "import hivemind.p2p.p2p_daemon as m; print(m.__file__)")
 nano "$DAEMON_FILE"
 
 # Şu satırı bul:
@@ -129,7 +129,7 @@ nano "$DAEMON_FILE"
 
 ## swarm.pem Dosyası Kayıp
 
-**Sorun:** Düğüm kimlik dosyası silindi veya kaybetti
+**Sorun:** Node kimlik dosyası silindi veya kaybetti
 
 **Çözüm 1: Yeni oluştur**
 ```bash
@@ -223,7 +223,7 @@ df -h
 
 ## Git Pull Sonrası Sorunlar
 
-**Hata:** Güncellemeden sonra komutlar çalışmıyor
+**Hata:** Güncelleme sonra komutlar çalışmıyor
 
 **Çözüm:**
 ```bash
@@ -257,7 +257,7 @@ huggingface-cli login
 # 2. Yeterli disk alanı var mı?
 df -h
 
-# 3. Internet bağlantısı stabil mi?
+# 3. İnternet bağlantısı stabil mi?
 ping huggingface.co
 
 # 4. Token'ı yenile
@@ -386,7 +386,7 @@ Sorun çözülemedi?
 1. [GitHub Issues](https://github.com/gensyn-ai/rl-swarm/issues) - Resmi RL-Swarm
 2. [Bu Repo Issues](https://github.com/getcakedieyoungx/rl-swarm-turkce-kurulum-rehberi/issues) - Türkçe rehber
 3. [Discord](https://discord.gg/AdnyWNzXh5) - Gensyn Discord
-4. [Resmi Docs](https://docs.gensyn.ai/testnet/rl-swarm) - Ingilizce belge
+4. [Resmi Docs](https://docs.gensyn.ai/testnet/rl-swarm) - İngilizce belge
 
 ---
 

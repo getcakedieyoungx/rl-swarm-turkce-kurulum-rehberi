@@ -19,7 +19,7 @@ Gensyn AI'ın geliştirdiği RL-Swarm, internet üzerinde dağıtılmış Reinfo
 ### CPU ile Çalıştırma
 - **RAM:** 32GB minimum
 - **CPU:** ARM64 veya x86 mimarisi
-- **Uyarı:** Sistem kaynaklarında stres yaşarsa eğitim kesintiye uğrayabilir
+- **Uyarı:** Sistem kaynakları stres yaşarsa eğitim kesintiye uğrayabilir
 
 ### GPU ile Çalıştırma (Önerilen)
 - **GPU:** NVIDIA RTX 3090, 4090, 5090 veya A100, H100
@@ -110,7 +110,7 @@ source .venv/bin/activate
 Eğer kendi sunucunuz varsa:
 ```bash
 ssh root@sunucu_ip
-# Üstteki manual kurulum adımlarını izleyin
+# Üstteki manuel kurulum adımlarını izleyin
 ```
 
 Detaylı rehber: [VPS Kurulum Rehberi](docs/vps-kurulum.md)
@@ -172,17 +172,17 @@ Arayüz açıldığında sorulan sorulara yanıtlar:
 
 **HuggingFace Hub'a yüklemek ister misiniz?**
 - Testnet'e katılmak için: **N** (enter)
-- Kendi modelini yüklemek için: **Y** + access token
+- Kendi modeli yüklemek için: **Y** + access token
 
 **Model seçimi:**
 - Varsayılan model için: **Enter**
-- Özel seçim: Model adını yazın (ör. `Gensyn/Qwen2.5-0.5B-Instruct`)
+- Özel seçim: Model adını yazın (örn. `Gensyn/Qwen2.5-0.5B-Instruct`)
 
 **AI Prediction Market:**
 - Katılmak için: **Y** veya Enter
 - Katılmamak için: **N**
 
-### Düğüm Adınızı Bulma
+### Node Adınızı Bulma
 
 Kurulum tamamlandıktan sonra terminal çıktısında hayvan adı yazacak:
 ```
@@ -193,25 +193,25 @@ Bu, testnet'teki kimliğiniz. Terminal çıktısında "Hello" yazısını arayı
 
 ### Monitoring
 
-[Gensyn Dashboard](https://dashboard.gensyn.ai/) adresine giriş yapıp:
-- Düğüm durumunu
+[Gensyn Dashboard](https://dashboard.gensyn.ai/) adresine giriş yap ıp:
+- Node durumunu
 - Kazanılan puanları
 - Başarı oranını
 - Prediction Market katılımını görebilirsiniz
 
 ---
 
-## Birden Fazla Düğüm
+## Birden Fazla Node
 
-Aynı email ile birden fazla düğüm çalıştırabilirsiniz:
+Aynı email ile birden fazla node çalıştırabilirsiniz:
 
 ```bash
-# İlk düğüm
+# İlk node
 git clone https://github.com/gensyn-ai/rl-swarm/ rl-swarm-1
 cd rl-swarm-1
 # ... kurulum ve çalıştırma
 
-# İkinci düğüm (farklı directory)
+# İkinci node (farklı directory)
 git clone https://github.com/gensyn-ai/rl-swarm/ rl-swarm-2
 cd rl-swarm-2
 # ... kurulum ve çalıştırma
@@ -225,7 +225,7 @@ Her biri benzersiz hayvan adı ve `swarm.pem` alacaktır.
 
 ### swarm.pem'i Yedekleme
 
-**Önemli:** `swarm.pem` dosyası düğümünüzün kimliğidir. Kaybetmemelisiniz.
+**Önemli:** `swarm.pem` dosyası node'unuzun kimliğidir. Kaybetmemelisiniz.
 
 ```bash
 # Yedek kopya
@@ -332,7 +332,7 @@ source .venv/bin/activate
 
 ## Telegram Bot Kurulumu (Opsiyonel)
 
-Düğümü Telegram üzerinden izlemek için:
+Node'u Telegram üzerinden izlemek için:
 
 **1. Go yükle:**
 ```bash
@@ -351,8 +351,8 @@ go install github.com/Deep-Commit/gswarm/cmd/gswarm@latest
 - Bot token'ı kaydet
 
 **4. Chat ID bul:**
-- Botunuza mesaj gönder
-- `https://api.telegram.org/botTOKEN/getUpdates` açıp chat ID'ni bul
+- Bot'unuza mesaj gönder
+- `https://api.telegram.org/botTOKEN/getUpdates` aç ve chat ID'ni bul
 
 **5. Çalıştır:**
 ```bash
@@ -366,7 +366,7 @@ gswarm
 
 - [Resmi RL-Swarm Repo](https://github.com/gensyn-ai/rl-swarm)
 - [Gensyn Dashboard](https://dashboard.gensyn.ai/)
-- [Resmi Dokümantasyon](https://docs.gensyn.ai/testnet/rl-swarm)
+- [Resmi Dokumentasyon](https://docs.gensyn.ai/testnet/rl-swarm)
 - [Discord Topluluk](https://discord.gg/AdnyWNzXh5)
 - [0xmoei'nin Rehberi](https://github.com/0xmoei/gensyn-ai) (İngilizce)
 
